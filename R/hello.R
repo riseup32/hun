@@ -223,4 +223,63 @@ machine <- function(model,data,test,y,outlier=TRUE,method='normal',mtry=round(sq
     cat(levels(y)[i],':',table(predict,y)[i,i]/sum(table(predict,y)[,i]),'\n')
   }
 }
+##########################################################################
+as.fourier <- function(data,x,period,k){
+ A <- NULL
+ for(i in 1:k){
+  Sin <- sin(i*(2*pi/period)*data[,grep(x,colnames(data))])
+  Cos <- cos(i*(2*pi/period)*data[,grep(x,colnames(data))])
+  A <- cbind(A,Sin,Cos)
+ }
+ 
+ df <- as.data.frame(A)
+ colName <- colnames(data)[-grep(x,colnames(data))]
+ 
+ for(i in 1:k){
+  colnames(df)[2*i-1] <- paste0(x,'_','Sin',i)
+  colnames(df)[2*i] <- paste0(x,'_','Cos',i)
+ }
+ data <- data.frame(data[,-grep(x,colnames(data))],df)
+ 
+ colnames(data)[1:length(colName)] <- colName
+ data <- data
+}
+##########################################################################
+as.Bspline <- function(data,x,kernel,interval){
+ round.kernel <- function(val){
+  return(sqrt((interval+val)*(interval-val)))
+  }
+
+ angle.kernel <- function(val){
+  if(val<=interval) {value <- val+interval}
+  else {value <- val-interval}
+  return(value)
+ }
+
+ for(i in kernel){
+  if(i=='round') {kernel <- round.kernel}
+  else if(i=='angle') {kernel <- angle.kernel}
+ }
+ 
+ B <- NULL
+ for(i in 0:round(nrow(data)/interval)){
+  A <- vector(length=nrow(data))
+  for(j in 1:nrow(data)){
+   if((data[,grep(x,colnames(data))][j] >= interval*(i-1)) & (data[,grep(x,colnames(data))][j] <= interval*(i+1))) {A[j] <- kernel(j-interval*i)}
+   else {A[j] <- 0}
+  }
+  B <- cbind(B,A)
+ }
+
+ df <- as.data.frame(B)
+ colName <- colnames(data)[-grep(x,colnames(data))]
+
+ for(i in 1:(round(nrow(data)/interval)+1)){
+  colnames(df)[i] <- paste0(x,'_B',i)
+ }
+ data <- data.frame(data[,-grep(x,colnames(data))],df)
+
+ colnames(data)[1:length(colName)] <- colName
+ data <- data
+}
 
