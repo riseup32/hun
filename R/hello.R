@@ -69,9 +69,6 @@ k.fold.cv <- function(model,data,y,k,mtry=round(sqrt(ncol(data))),ntree=500,kern
 }
 ##########################################################################
 machine <- function(model,data,test,y,outlier=TRUE,method='normal',mtry=round(sqrt(ncol(data))),ntree=500,kernel='radial',cost=1,scale=TRUE){
-  data[,grep(y,colnames(data))] <- as.factor(data[,grep(y,colnames(data))])
-  test[,grep(y,colnames(test))] <- as.factor(test[,grep(y,colnames(test))])
-
   if(length(levels(data[,grep(y,colnames(data))])) > length(levels(test[,grep(y,colnames(test))]))) {levels(test[,grep(y,colnames(test))]) <- levels(data[,grep(y,colnames(data))])}
   if(length(levels(data[,grep(y,colnames(data))])) < length(levels(test[,grep(y,colnames(test))]))) {levels(data[,grep(y,colnames(data))]) <- levels(test[,grep(y,colnames(test))])}
 
@@ -92,7 +89,7 @@ machine <- function(model,data,test,y,outlier=TRUE,method='normal',mtry=round(sq
   data <- data[,A]
 
   for(i in 1:ncol(data)){
-    if(sum(is.na(data[,i]))>nrow(data)/3) {data[,i] <- NULL}
+    if(sum(is.na(data[,i]))>nrow(data)/4) {data[,i] <- NULL}
   }
 
   test <- test[,colnames(data)]
@@ -212,16 +209,21 @@ machine <- function(model,data,test,y,outlier=TRUE,method='normal',mtry=round(sq
 
   value <- mean(as.numeric(predict)==as.numeric(y2))
   prediction <- paste0(round(value*100,2),'%')
+  rmse <- rmse(predict,y2) 
 
   y <- y2
-  cat('model:',modelNm,'\n',
+  if(is.factor(y)) {cat('model:',modelNm,'\n',
       'cv.value',':',cv.value,'\n',
-      'prediction',':',prediction,'\n')
-  cat('\n','Confusion matrix','\n')
-  print(table(predict,y))
-  for(i in 1:length(levels(y))){
+      'prediction',':',prediction,'\n')}
+  if(is.factor(y)) {cat('\n','Confusion matrix','\n')}
+  if(is.factor(y)) {print(table(predict,y))}
+  if(is.factor(y)) {for(i in 1:length(levels(y))){
     cat(levels(y)[i],':',table(predict,y)[i,i]/sum(table(predict,y)[,i]),'\n')
-  }
+  }}
+
+  if(is.numeric(y)) {cat('model:',modelNm,'\n',
+      'cv.value',':',cv.value,'\n',
+      'rmse',':',rmse,'\n')}
 }
 ##########################################################################
 as.fourier <- function(data,x,period,k){
@@ -282,4 +284,14 @@ as.Bspline <- function(data,x,kernel,interval){
  colnames(data)[1:length(colName)] <- colName
  data <- data
 }
-
+##########################################################################
+hunhelp <- function(func){
+ for(i in func){
+  if(i=='machine') {cat('machine(model,data,test,y,outlier=TRUE,method=normal,mtry=round(sqrt(ncol(data))),ntree=500,kernel=radial,cost=1,scale=TRUE)','\n')}
+  else if(i=='edaplot') {cat('edaplot(x,y)','\n')}
+  else if(i=='rmse') {cat('rmse(y,yhat)','\n')}
+  else if(i=='k.fold.cv') {cat('k.fold.cv(model,data,y,k,mtry=round(sqrt(ncol(data))),ntree=500,kernel=radial,cost=1,scale=TRUE)','\n')}
+  else if(i=='as.fourier') {cat('as.fourier(data,x,period,k)','\n')}
+  else if(i=='as.Bspline') {cat('as.Bspline(data,x,kernel,interval)','\n')}
+ }
+}
