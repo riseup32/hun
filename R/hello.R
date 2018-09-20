@@ -105,7 +105,7 @@ machine <- function(model,data,test,y,outlier=TRUE,method='normal',mtry=round(sq
       if(is.numeric(data[,i])) {C <- colnames(B)[abs(B[,grep(colnames(data)[i],colnames(B))])==sort(abs(B[,grep(colnames(data)[i],colnames(B))]),decreasing=T)[2]]}
       if(is.numeric(data[,i])) {lm <- lm(data[,i][!is.na(data[,grep(C,colnames(data))])]~data[,grep(C,colnames(data))][!is.na(data[,grep(C,colnames(data))])],data=data)}
       if(is.numeric(data[j,i]) & is.na(data[j,i])) {data[j,i] <- predict(lm,list=data[,grep(C,colnames(data))])[j]}
-      else if(is.factor(data[j,i]) & is.na(data[j,i])) {data[j,i] <- data[,i][which(table(data[,i])==max(table(data[,i])))]}
+      else if(is.factor(data[j,i]) & is.na(data[j,i])) {data[j,i] <- levels(data[,i])[which(table(data[,i])==max(table(data[,i])))]}
     }
   }
 
@@ -114,7 +114,7 @@ machine <- function(model,data,test,y,outlier=TRUE,method='normal',mtry=round(sq
       if(is.numeric(test[,i])) {C <- colnames(B)[abs(B[,grep(colnames(data)[i],colnames(B))])==sort(abs(B[,grep(colnames(data)[i],colnames(B))]),decreasing=T)[2]]}
       if(is.numeric(test[,i])) {lm <- lm(data[,i][!is.na(data[,grep(C,colnames(data))])]~data[,grep(C,colnames(data))][!is.na(data[,grep(C,colnames(data))])],data=data)}
       if(is.numeric(test[j,i]) & is.na(test[j,i])) {test[j,i] <- predict(lm,list=test[,grep(C,colnames(test))])[j]}
-      else if(is.factor(test[j,i]) & is.na(test[j,i])) {test[j,i] <- test[,i][which(table(test[,i])==max(table(test[,i])))]}
+      else if(is.factor(test[j,i]) & is.na(test[j,i])) {test[j,i] <- levels(test[,i])[which(table(test[,i])==max(table(test[,i])))]}
     }
   }
 
@@ -282,6 +282,16 @@ as.Bspline <- function(data,x,kernel,interval){
  data <- data.frame(data[,-grep(x,colnames(data))],df)
 
  colnames(data)[1:length(colName)] <- colName
+ data <- data
+}
+##########################################################################
+pipeline <- function(data,y){
+ for(i in 1:ncol(data)){
+  if(is.numeric(data[,i]) & !(sum(is.na(data[,i]))==0)) {data[,i][is.na(data[,i])] <- median(data[,i],na.rm=T)}
+  if(is.numeric(data[,i]) & colnames(data)[i]!=colnames(wine.data)[grep(y,colnames(data))]) {data[,i] <- scale(data[,i])}
+  if(is.character(data[,i])) {data[,i] <- as.factor(data[,i])}
+  if(is.factor(data[,i]) & !(sum(is.na(data[,i]))==0)) {data[,i][is.na(data[,i])] <- levels(data[,i])[which(table(data[,i])==max(table(data[,i])))]}
+ }
  data <- data
 }
 ##########################################################################
