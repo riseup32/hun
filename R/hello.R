@@ -216,9 +216,9 @@ machine <- function(model,data,test,y,outlier=TRUE,method='normal',mtry=round(sq
       'cv.value',':',cv.value,'\n',
       'prediction',':',prediction,'\n')}
   if(is.factor(y)) {cat('\n','Confusion matrix','\n')}
-  if(is.factor(y)) {print(table(predict,y))}
+  if(is.factor(y)) {print(table(y,predict))}
   if(is.factor(y)) {for(i in 1:length(levels(y))){
-    cat(levels(y)[i],':',table(predict,y)[i,i]/sum(table(predict,y)[,i]),'\n')
+    cat(levels(y)[i],':',table(y,predict)[i,i]/sum(table(y,predict)[i,]),'\n')
   }}
 
   if(is.numeric(y)) {cat('model:',modelNm,'\n',
@@ -293,6 +293,33 @@ pipeline <- function(data,y){
   if(is.factor(data[,i]) & !(sum(is.na(data[,i]))==0)) {data[,i][is.na(data[,i])] <- levels(data[,i])[which(table(data[,i])==max(table(data[,i])))]}
  }
  data <- data
+}
+##########################################################################
+precision_score <- function(y,predict){
+ T <- table(y,predict)
+ return(T[2,2]/(T[1,2]+T[2,2]))
+}
+##########################################################################
+recall_score <- function(y,predict){
+ T <- table(y,predict)
+ return(T[2,2]/(T[2,1]+T[2,2]))
+}
+##########################################################################
+f1_score <- function(y,predict){
+ T <- table(y,predict)
+ precision_score <- T[2,2]/(T[1,2]+T[2,2])
+ recall_score <- T[2,2]/(T[2,1]+T[2,2])
+ return(2/((1/precision_score)+(1/recall_score)))
+}
+##########################################################################
+confusion_matrix <- function(y,predict){
+ value <- mean(as.numeric(predict)==as.numeric(y))
+ prediction <- paste0(round(value*100,2),'%')
+ cat('prediction',':',prediction,'\n')
+ print(table(y,predict))
+ for(i in 1:length(levels(y))){
+  cat(levels(y)[i],':',table(y,predict)[i,i]/sum(table(y,predict)[i,]),'\n')
+ }
 }
 ##########################################################################
 hunhelp <- function(func){
