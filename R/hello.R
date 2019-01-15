@@ -209,7 +209,7 @@ machine <- function(model,data,test,y,outlier=TRUE,method='normal',mtry=round(sq
 
   value <- mean(as.numeric(predict)==as.numeric(y2))
   prediction <- paste0(round(value*100,2),'%')
-  rmse <- rmse(predict,y2) 
+  rmse <- rmse(predict,y2)
 
   y <- y2
   if(is.factor(y)) {cat('model:',modelNm,'\n',
@@ -233,16 +233,16 @@ as.fourier <- function(data,x,period,k){
   Cos <- cos(i*(2*pi/period)*data[,grep(x,colnames(data))])
   A <- cbind(A,Sin,Cos)
  }
- 
+
  df <- as.data.frame(A)
  colName <- colnames(data)[-grep(x,colnames(data))]
- 
+
  for(i in 1:k){
   colnames(df)[2*i-1] <- paste0(x,'_','Sin',i)
   colnames(df)[2*i] <- paste0(x,'_','Cos',i)
  }
  data <- data.frame(data[,-grep(x,colnames(data))],df)
- 
+
  colnames(data)[1:length(colName)] <- colName
  data <- data
 }
@@ -262,7 +262,7 @@ as.Bspline <- function(data,x,kernel,interval){
   if(i=='round') {kernel <- round.kernel}
   else if(i=='angle') {kernel <- angle.kernel}
  }
- 
+
  B <- NULL
  for(i in 0:round(nrow(data)/interval)){
   A <- vector(length=nrow(data))
@@ -331,4 +331,41 @@ hunhelp <- function(func){
   else if(i=='as.fourier') {cat('as.fourier(data,x,period,k)','\n')}
   else if(i=='as.Bspline') {cat('as.Bspline(data,x,kernel,interval)','\n')}
  }
+}
+##########################################################################
+t_test <- function(data1, data2, x, y){
+  data1[,grep(x,colnames(data1))] <- as.factor(data1[,grep(x,colnames(data1))])
+  data2[,grep(x,colnames(data2))] <- as.factor(data2[,grep(x,colnames(data2))])
+  data1 <- data1[!is.na(data1[,grep(x,colnames(data1))]),]
+  data2 <- data2[!is.na(data2[,grep(x,colnames(data2))]),]
+  level <- levels(data1[,grep(x,colnames(data1))])
+
+  for(i in level){
+    data1_1 <- data1[data1[,grep(x,colnames(data1))]==i,]
+    data2_1 <- data2[data2[,grep(x,colnames(data2))]==i,]
+
+    data1_y_mean <- apply(data1_1[,grep(y,colnames(data1_1))],1,mean)
+    data2_y_mean <- apply(data2_1[,grep(y,colnames(data2_1))],1,mean)
+    data1_y_sd <- apply(data1_1[,grep(y,colnames(data1_1))],1,sd)
+    data2_y_sd <- apply(data2_1[,grep(y,colnames(data2_1))],1,sd)
+
+    cat(x,':',i,'\n')
+
+    cat(' 사전데이터 샘플수:', length(data1_y_mean),'\n',
+        '사후데이터 샘플수:', length(data2_y_mean),'\n','\n')
+
+    cat(' 사전데이터 평균:', mean(data1_y_mean),'\n',
+        '사후데이터 평균:', mean(data2_y_mean),'\n','\n')
+
+    cat(' 사전데이터 표준편차:', mean(data1_y_sd),'\n',
+        '사후데이터 표준편차:', mean(data2_y_sd),'\n')
+
+    var_pvalue <- var.test(data1_y_mean,data2_y_mean)$p.value
+
+    if(var_pvalue < 0.05) {
+      print(t.test(data1_y_mean,data2_y_mean,var.equal=FALSE))
+    } else {
+      print(t.test(data1_y_mean,data2_y_mean,var.equal=TRUE))
+    }
+  }
 }
